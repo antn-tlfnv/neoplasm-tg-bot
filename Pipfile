@@ -5,9 +5,7 @@ verify_ssl = true
 
 [dev-packages]
 pylint = "*"
+autopep8 = "*"
 
 [packages]
 aiogram = "*"
-
-[requires]
-python_version = "3.7"

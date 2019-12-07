@@ -2,6 +2,7 @@
 config.py
 
 # VSCode
+.vscode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
