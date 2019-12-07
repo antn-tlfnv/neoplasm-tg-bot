@@ -20,3 +20,6 @@ pyotp = "*"
 aiohttp = "*"
 dnspython = "*"
 idna-ssl = "*"
+
+[requires]
+python_version = "3.7"
