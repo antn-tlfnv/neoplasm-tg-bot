@@ -100,7 +100,7 @@ async def process_name(message: types.Message, state: FSMContext):
             registered = response['registered']
             print(response)
             if registered:
-                await message.reply(f'You are registered\nWelcome to Noplasm!')
+                await message.reply(f'You are registered\nWelcome to Neoplasm!')
                 await state.finish()
 
             else:
