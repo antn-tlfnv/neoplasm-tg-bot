@@ -1,15 +1,6 @@
 # Config file
 config.py
 
-# VSCode
-.vscode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -114,3 +105,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# vscode
+.vscode

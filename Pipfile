@@ -6,6 +6,16 @@ verify_ssl = true
 [dev-packages]
 pylint = "*"
 autopep8 = "*"
+rope = "*"
 
 [packages]
 aiogram = "*"
+uvloop = "*"
+ujson = "*"
+cchardet = "*"
+aiodns = "*"
+brotlipy = "*"
+pymongo = "*"
+pyotp = "*"
+aiohttp = "*"
+dnspython = "*"
