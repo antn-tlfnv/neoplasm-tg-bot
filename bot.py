@@ -1,42 +1,110 @@
 """
-This is a echo bot.
-It echoes any incoming text messages.
+Neoplasm Telegram Bot
 """
 
 import logging
+import os
+from pprint import pprint
 
+import aiohttp
+import pymongo
 from aiogram import Bot, Dispatcher, executor, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Text
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import ParseMode
+from aiogram.utils import executor
+from aiohttp import web
+from pymongo import MongoClient
 
-# Configure logging
+TOKEN = os.environ.get('TG_TOKEN')
+
 logging.basicConfig(level=logging.INFO)
 
-# Initialize bot and dispatcher
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+bot = Bot(token=TOKEN)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 
-@dp.message_handler(regexp='(^cat[s]?$|puss)')
-async def cats(message: types.Message):
-    with open('data/cats.jpg', 'rb') as photo:
-        '''
-        # Old fashioned way:
-        await bot.send_photo(
-            message.chat.id,
-            photo,
-            caption='Cats are here 😺',
-            reply_to_message_id=message.message_id,
-        )
-        '''
-
-        await message.reply_photo(photo, caption='Cats are here 😺')
+routes = web.RouteTableDef()
 
 
-@dp.message_handler()
-async def echo(message: types.Message):
-    # old style:
-    # await bot.send_message(message.chat.id, message.text)
+@dp.message_handler(commands='start')
+async def start(message: types.Message):
+    await message.reply(
+        'Welcome to Neoplasm Bot\nTo register an item use /register'
+    )
 
-    await message.reply(message.text, reply=False)
 
+@dp.message_handler(commands='help')
+async def help(message: types.Message):
+    await message.reply(
+        'This is Neoplasm Bot\nTo register an item use /register'
+    )
+
+
+class Registration(StatesGroup):
+    otp = State()
+
+
+@dp.message_handler(state='*', commands='cancel')
+@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(message: types.Message, state: FSMContext):
+    """
+    Allow user to cancel any action
+    """
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+
+    logging.info('Cancelling state %r', current_state)
+    await state.finish()
+    await message.reply('Cancelled', reply_markup=types.ReplyKeyboardRemove())
+
+
+@dp.message_handler(commands='register')
+async def register(message: types.Message):
+    await message.reply(
+        'Send me the code'
+    )
+
+    await Registration.otp.set()
+
+
+@dp.message_handler(
+    lambda message: not message.text.isdigit(),
+    state=Registration.otp
+)
+async def register_(message: types.Message):
+    return await message.reply('Not integer\nCode must be 6 digits number\nEnter valid code or use /cancel to quit')
+
+
+@dp.message_handler(
+    lambda message: message.text.isdigit() and len(message.text) != 6,
+    state=Registration.otp
+)
+async def process_age_invalid(message: types.Message):
+    return await message.reply('Not 6 digits\nCode must be 6 digits number\nEnter valid code or use /cancel to quit')
+
+
+@dp.message_handler(
+    lambda message: message.text.isdigit() and len(message.text) == 6,
+    state=Registration.otp
+)
+async def process_name(message: types.Message, state: FSMContext):
+    otp = message.text
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f'https://neoplasm-api.herokuapp.com/itemVerify?otp={otp}&tg_user_id={message.from_user.id}') as resp:
+            response = await resp.json()
+            registered = response['registered']
+            print(response)
+            if registered:
+                await message.reply(f'You are registered\nWelcome to Noplasm!')
+                await state.finish()
+
+            else:
+                await message.reply(f'Wrong code\nTry another or use /cancel to quit')
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
